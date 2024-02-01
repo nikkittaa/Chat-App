@@ -5,6 +5,7 @@ const User = require('./models/User.js');
 const jwt = require('jsonwebtoken');
 var cookieParser = require('cookie-parser');
 var cors = require('cors');
+var bcrypt = require('bcryptjs');
 const app = express();
 
 app.use(express.json());
@@ -21,6 +22,7 @@ app.use(cors(
 mongoose.connect(process.env.MONGO_URL);
 
 const jwtSecret = process.env.JWT_SECRET;
+const bcryptSalt = bcrypt.genSaltSync(10);
 
 app.get('/test', (req, res) => {
     res.json("test: ok");
@@ -40,16 +42,37 @@ app.get('/profile', (req, res) => {
    
 });
 
+app.post('/login', async (req, res) => {
+    const {username, password} = req.body;
+    const foundUser  = await User.findOne({username});
+    if(foundUser){
+        const passOk = bcrypt.compareSync(password, foundUser.password);
+        if(passOk){
+            jwt.sign({userId: foundUser._id, username}, jwtSecret, {}, (err, token) => {
+                if(err) throw err;
+                res.cookie('token', token, {sameSite: 'none', secure: 'true'}).json({
+                    id: foundUser._id,
+                })
+            });
+        }
+}
+
+});
+
+
 app.post('/register' , async (req, res) => {
     const {username, password} = req.body;
 
     try{
-    const createdUser = await User.create({username, password});
-    jwt.sign({userid : createdUser._id}, jwtSecret , {} , (err, token) => {
+        const hashedPassword = bcrypt.hashSync(password, bcryptSalt);
+    const createdUser = await User.create({
+        username: username, 
+        password: hashedPassword});
+    jwt.sign({userid : createdUser._id, username }, jwtSecret , {} , (err, token) => {
         if (err) throw err;
-        res.cookie('token', token).status(201).json({
+        res.cookie('token', token, {sameSite: "none", secure: true}).status(201).json({
             id: createdUser._id,
-            username,
+            
         });
     });
     } catch (err){

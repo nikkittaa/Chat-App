@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import Register from './Register'
+import RegisterAndLoginForm from './RegisterAndLoginForm'
 import { UserContext } from './UserContext'
 
 const Routes = () => {
@@ -7,10 +7,10 @@ const Routes = () => {
     const {username, id} = useContext(UserContext);
 
     if(username){
-        return "logged in!";
+        return "logged in! "+ username;
     }
     return (
-        <Register></Register>
+        <RegisterAndLoginForm/>
     )
 }
 
