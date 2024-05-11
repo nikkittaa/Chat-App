@@ -89,6 +89,8 @@ const server = app.listen(4040);
 
 const wss =  new ws.WebSocketServer({server});
 wss.on('connection', (connection, req) => {
+
+    
     const cookies = req.headers.cookie;
     if(cookies){
         const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
@@ -97,13 +99,26 @@ wss.on('connection', (connection, req) => {
             if(token){
                 jwt.verify(token, jwtSecret, {}, (err, userData) => {
                     if(err) throw err;
-                    const {userId, username} = userData;
-                    connection.userId = userId;
+                    const {userid, username} = userData;
+                    //console.log(userData);
+                    connection.userId = userid;
                     connection.username = username;
                 });
             }
         }
     }
+
+    connection.on('message', (message) => {
+        const messageData = JSON.parse(message.toString());
+        const {recipient, text} = messageData;
+        if(recipient && text){
+            [...wss.clients]
+            .filter(c => c.userId === recipient)
+            .forEach(c => c.send(JSON.stringify({text})));
+        }
+    });
+   // console.log([...wss.clients].map(c => c.userId));
+   //online people
     [...wss.clients].forEach(client => {
         client.send(JSON.stringify(
             {online: [...wss.clients].map(c => ({userId: c.userId, username: c.username}))
