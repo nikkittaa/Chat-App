@@ -1,13 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react'
 import Avatar from './Avatar';
 import {UserContext} from './UserContext';
+import {uniqBy} from "lodash";
 
 const Chat = () => {
     const [ws, setWs] = useState(null);
     const [onlinePeople, setOnlinePeople] = useState({});
     const [selectUserId, setSelectUserId] = useState(null);
     const {username, id} = useContext(UserContext);
-    const [newMessageText, setMessagetext] = useState("");
+    const [newMessageText, setNewMessagetext] = useState("");
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:4040');
@@ -24,12 +26,13 @@ const Chat = () => {
     }
 
     function handleMessage(ev){
-        //console.log(ev.data);
+        console.log(ev.data);
         const messageData = JSON.parse(ev.data);
         if('online' in messageData){
+           // console.log(messageData.online);
             showOnlinePeople(messageData.online);
-        }else{
-            console.log({messageData});
+        }else if('text' in messageData){
+            setMessages(prev => ([...prev, {isOur: false, text: messageData.text}]));
         }
     }
 
@@ -44,12 +47,16 @@ const Chat = () => {
             text: newMessageText,
             
         }));
+        setMessages(prev => ([...prev, {text : newMessageText, isOur: true}]));
+        setNewMessagetext('');   
     }
 
     const onlinePeopleExclOurUser = {...onlinePeople};
     delete onlinePeopleExclOurUser[id];
-   // console.log("My id", id);
-   // console.log(onlinePeopleExclOurUser);
+  // console.log("My id", id);
+  // console.log({...onlinePeople});
+
+    const messagesWithoutDupes = uniqBy(messages, 'id');
   return (
     <div className = "flex h-screen">
         <div className = "bg-purple-10 w-1/3  pt-4">
@@ -83,13 +90,22 @@ const Chat = () => {
                            <div className = "text-gray-500"> &larr; Select a person</div>
                         </div>
                     )}
-
+                    {!!selectUserId && (
+                <div>
+                    {messagesWithoutDupes.map(message => (
+                        <div>
+                            {message.text}
+                        </div>
+                    ))}
+                </div>
+            )}
             </div>
+           
             {!!selectUserId && (
                 <form className = "ml-2 flex gap-2" onSubmit = {sendMessage}>
                 <input type = "text" 
                     value = {newMessageText}
-                    onChange = {ev => setMessagetext(ev.target.value)}
+                    onChange = {ev => setNewMessagetext(ev.target.value)}
                     className = "flex-grow bg-white border p-2 rounded-xl" 
                     placeholder = "Type your message here"/>
                 <button className = "bg-purple-500 p-2 text-white rounded-xl">
@@ -99,6 +115,7 @@ const Chat = () => {
                 </button>
             </form>
             )}
+            
             
         </div>
     </div>
