@@ -45,9 +45,9 @@ const Chat = () => {
         ws.send(JSON.stringify({
             recipient: selectUserId,
             text: newMessageText,
-            
+        
         }));
-        setMessages(prev => ([...prev, {sender: id, text : newMessageText, recipient: selectUserId}]));
+        setMessages(prev => ([...prev, {sender: id, text : newMessageText, recipient: selectUserId, id: Date.now(),}]));
         setNewMessagetext('');   
     }
 
@@ -91,10 +91,13 @@ const Chat = () => {
                         </div>
                     )}
                     {!!selectUserId && (
-                <div>
+                <div className = "overflow-y-scroll">
                     {messagesWithoutDupes.map(message => (
-                        <div key = {message.id}>
-                            
+                        <div className = {(message.sender === id ? 'text-right': 'text-left')}>
+                            <div key = {message.id}
+                                className = {"text-left inline-block rounded-xl py-2 px-2 m-2 " + (message.sender === id ? 'bg-purple-600 text-white': 'bg-white text-gray-500')}>
+                                {message.text}
+                            </div>
                         </div>
                     ))}
                 </div>
