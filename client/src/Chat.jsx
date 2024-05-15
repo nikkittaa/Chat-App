@@ -32,7 +32,7 @@ const Chat = () => {
            // console.log(messageData.online);
             showOnlinePeople(messageData.online);
         }else if('text' in messageData){
-            setMessages(prev => ([...prev, {isOur: false, text: messageData.text}]));
+            setMessages(prev => ([...prev, {...messageData}]));
         }
     }
 
@@ -47,7 +47,7 @@ const Chat = () => {
             text: newMessageText,
             
         }));
-        setMessages(prev => ([...prev, {text : newMessageText, isOur: true}]));
+        setMessages(prev => ([...prev, {sender: id, text : newMessageText, recipient: selectUserId}]));
         setNewMessagetext('');   
     }
 
@@ -93,8 +93,8 @@ const Chat = () => {
                     {!!selectUserId && (
                 <div>
                     {messagesWithoutDupes.map(message => (
-                        <div>
-                            {message.text}
+                        <div key = {message.id}>
+                            
                         </div>
                     ))}
                 </div>
