@@ -26,8 +26,35 @@ mongoose.connect(process.env.MONGO_URL);
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
+async function getUserData(req){
+    return new Promise((resolve, reject) => {
+        const token = req.cookies?.token;
+        if(token){
+            jwt.verify(token, jwtSecret, {}, (err, userdata) =>{
+                if(err) throw err;
+          //  console.log(userdata);
+                resolve(userdata);
+            });
+        }else{
+            reject('no token');
+        }
+    });
+    
+}
+
 app.get('/test', (req, res) => {
     res.json("test: ok");
+});
+
+app.get('/messages/:userId', async (req, res) => {
+    const {userId} = req.params;
+    const userData = await getUserData(req);
+    const ourUserId = userData.userId;
+    const messages = await Message.find({
+        sender: {$in: [userId, ourUserId]},
+        recipient: {$in: [userId, ourUserId]},
+    }).sort({createdAt: -1}).exec();
+    res.json(messages);
 });
 
 app.get('/profile', (req, res) => {

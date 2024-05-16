@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar';
 import {UserContext} from './UserContext';
 import {uniqBy} from "lodash";
+import axios from 'axios';
 
 const Chat = () => {
     const [ws, setWs] = useState(null);
@@ -13,10 +14,20 @@ const Chat = () => {
     const divUnderMessages = useRef();
 
     useEffect(() => {
+        connectToWs();
+    }, []);
+
+    function connectToWs(){
         const ws = new WebSocket('ws://localhost:4040');
         setWs(ws);
         ws.addEventListener('message', handleMessage);
-    }, []);
+        ws.addEventListener('close', () => {
+            setTimeout(() => {
+                console.log('Disconnected. trying to reconnect.');
+                connectToWs();
+            }, 1000);
+        });
+    }
 
     function showOnlinePeople(peopleArray){
         const people = {};
@@ -59,6 +70,12 @@ const Chat = () => {
 
         }
     }, [messages]);
+
+    useEffect(() => {
+        if(selectUserId){
+            axios.get('/messages/' + selectUserId);
+        }
+    }, [selectUserId]);
 
     const onlinePeopleExclOurUser = {...onlinePeople};
     delete onlinePeopleExclOurUser[id];
