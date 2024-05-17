@@ -38,7 +38,7 @@ const Chat = () => {
     }
 
     function handleMessage(ev){
-        console.log(ev.data);
+       // console.log(ev.data);
         const messageData = JSON.parse(ev.data);
         if('online' in messageData){
            // console.log(messageData.online);
@@ -59,7 +59,7 @@ const Chat = () => {
             text: newMessageText,
         
         }));
-        setMessages(prev => ([...prev, {sender: id, text : newMessageText, recipient: selectUserId, id: Date.now(),}]));
+        setMessages(prev => ([...prev, {sender: id, text : newMessageText, recipient: selectUserId, _id: Date.now(),}]));
         setNewMessagetext(''); 
     }
 
@@ -73,7 +73,10 @@ const Chat = () => {
 
     useEffect(() => {
         if(selectUserId){
-            axios.get('/messages/' + selectUserId);
+            axios.get('/messages/' + selectUserId).then(res => {
+                const {data} = res;
+                setMessages(data);
+            });
         }
     }, [selectUserId]);
 
@@ -82,7 +85,7 @@ const Chat = () => {
   // console.log("My id", id);
   // console.log({...onlinePeople});
 
-    const messagesWithoutDupes = uniqBy(messages, 'id');
+    const messagesWithoutDupes = uniqBy(messages, '_id');
   return (
     <div className = "flex h-screen">
         <div className = "bg-purple-10 w-1/3  pt-4">
@@ -92,7 +95,7 @@ const Chat = () => {
             <path d="M15.75 7.5c-1.376 0-2.739.057-4.086.169C10.124 7.797 9 9.103 9 10.609v4.285c0 1.507 1.128 2.814 2.67 2.94 1.243.102 2.5.157 3.768.165l2.782 2.781a.75.75 0 0 0 1.28-.53v-2.39l.33-.026c1.542-.125 2.67-1.433 2.67-2.94v-4.286c0-1.505-1.125-2.811-2.664-2.94A49.392 49.392 0 0 0 15.75 7.5Z" />
             </svg>
 
-            MernChat
+            ChatX
         </div>
 
             {Object.keys(onlinePeopleExclOurUser).map(userId => (
@@ -121,8 +124,8 @@ const Chat = () => {
                         <div className = "relative h-full">
                             <div className = "overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                                 {messagesWithoutDupes.map(message => (
-                                    <div className = {(message.sender === id ? 'text-right': 'text-left')}>
-                                        <div key = {message.id}
+                                    <div key = {message._id} className = {(message.sender === id ? 'text-right': 'text-left')}>
+                                        <div
                                             className = {"text-left inline-block rounded-xl py-2 px-2 m-2 " + (message.sender === id ? 'bg-purple-600 text-white': 'bg-white text-gray-500')}>
                                             {message.text}
                                         </div>
