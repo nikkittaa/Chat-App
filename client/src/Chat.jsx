@@ -7,6 +7,7 @@ import axios from 'axios';
 const Chat = () => {
     const [ws, setWs] = useState(null);
     const [onlinePeople, setOnlinePeople] = useState({});
+    const [offlinePeople, setOfflinePeople] = useState({});
     const [selectUserId, setSelectUserId] = useState(null);
     const {username, id} = useContext(UserContext);
     const [newMessageText, setNewMessagetext] = useState("");
@@ -80,6 +81,22 @@ const Chat = () => {
         }
     }, [selectUserId]);
 
+    useEffect(() => {
+        axios.get('/people').then(res => {
+            const offlineArr = res.data
+            .filter(p => p._id !== id)
+            .filter(p => !Object.keys(onlinePeople).includes(p._id));
+           // console.log(offlinePeople);
+           const offlinep = {};
+           offlineArr.forEach(p => {
+            offlinep[p._id] = p.username;
+           });
+           setOfflinePeople(offlinep);
+           console.log(offlinePeople);
+            
+        });
+    }, [onlinePeople]);
+
     const onlinePeopleExclOurUser = {...onlinePeople};
     delete onlinePeopleExclOurUser[id];
   // console.log("My id", id);
@@ -106,12 +123,30 @@ const Chat = () => {
                     <div className = "w-1 bg-purple-500 h-10"></div>
                 )}
                 <div className = "flex gap-2 pl-4 py-2 items-center">
-                    <Avatar username = {onlinePeople[userId]} userId = {userId}/>
+                    <Avatar username = {onlinePeople[userId]} userId = {userId} online = {true}/>
                     <span className = "text-gray-800">{onlinePeople[userId]} </span>
                 </div>
                 
                 </div>
             ))}
+            
+            {Object.keys(offlinePeople).map(userId => (
+                <div key = {userId} 
+                onClick = {() => selectContact(userId)} 
+                className = {"cursor-pointer border-b border-gray-100  flex gap-2 items-center " +(userId === selectUserId? "bg-purple-50" : "")}> 
+                {userId === selectUserId && (
+                    <div className = "w-1 bg-purple-500 h-10"></div>
+                )}
+                <div className = "flex gap-2 pl-4 py-2 items-center">
+                    <Avatar username = {offlinePeople[userId]} userId = {userId} online = {false}/>
+                    <span className = "text-gray-800">{offlinePeople[userId]} </span>
+                </div>
+                
+                </div>
+            ))}
+
+
+
         </div>
         <div className = "flex flex-col bg-purple-100 w-2/3 p-2">
             <div className = "ml-2 flex-grow">
